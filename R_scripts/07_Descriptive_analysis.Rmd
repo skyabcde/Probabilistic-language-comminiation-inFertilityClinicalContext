@@ -1,0 +1,258 @@
+---
+title: "Descriptive analysis"
+author: "Sky J. Liu"
+date: "`r format(Sys.time(), '%H:%M:%S %Z on %d %b %Y')`"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+<style type="text/css">
+ .twoC {width: 100%}
+ .clearer {clear: both}
+ .twoC .tcright {max-width: 50%; float: right}
+ .twoC .tcleft {max-width: 50%; float: left}
+</style>
+
+```{r echo=FALSE, message=FALSE, warning = FALSE}
+library(tidyverse)
+library(tidyr)
+library(haven) 
+library(dplyr)
+library(gdata)
+library(renv)
+library(ggplot2)
+library(ggExtra)
+library(flextable)
+
+
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
+# Load data
+fertility_patient = here::here("data/FP_data_n257.csv.gitignore")
+fp_all = read_csv(fertility_patient)
+fertility_doctors = here::here("data/HCP_data_n216.csv.gitignore")
+hcp_all = read_csv(fertility_doctors)
+
+fertility_patient_taska = here::here("derived_data/fp_ta_clean.csv.gitignore")
+fp_ta = read_csv(fertility_patient_taska)
+fertility_patient_taskb = here::here("derived_data/fp_tb_clean.csv.gitignore")
+fp_tb = read_csv(fertility_patient_taskb)
+
+fertility_doctor_taska = here::here("derived_data/hcp_ta_clean.csv.gitignore")
+hcp_ta = read_csv(fertility_doctor_taska)
+fertility_doctor_taskb = here::here("derived_data/hcp_tb_clean.csv.gitignore")
+hcp_tb = read_csv(fertility_doctor_taskb)
+
+taska_x2_stats = here::here("derived_data/fphcp_ta_x2_real.csv")
+fphcp_ta_x2_real = read_csv(taska_x2_stats)
+taskb_ks_stats = here::here("derived_data/fphcp_tb_ks_real.csv")
+fphcp_tb_ks_real = read_csv(taskb_ks_stats)
+
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
+# Remove ID column.
+fp_ta %>%
+  select(-id) -> fp_ta
+names(fp_ta) <- colnames(fp_ta) %>%
+  stringr::str_remove(pattern = 'task_a_') %>%
+  stringr::str_replace_all(
+    pattern = '\\.', replacement = ' '
+  )
+
+fp_tb %>%
+  select(-id) -> fp_tb
+names(fp_tb) <- colnames(fp_tb) %>%
+  stringr::str_remove(pattern = 'task_b_') %>%
+  stringr::str_replace_all(
+    pattern = '\\.', replacement = ' '
+  )
+
+hcp_ta %>%
+  select(-id) -> hcp_ta
+names(hcp_ta) <- colnames(hcp_ta) %>%
+  stringr::str_remove(pattern = 'task_a_') %>%
+  stringr::str_replace_all(
+    pattern = '\\.', replacement = ' '
+  )
+
+hcp_tb %>%
+  select(-id) -> hcp_tb
+names(hcp_tb) <- colnames(hcp_tb) %>%
+  stringr::str_remove(pattern = 'task_b_') %>%
+  stringr::str_replace_all(
+    pattern = '\\.', replacement = ' '
+  )
+
+
+# Calculate means of ratings of HCP column for table column ordering purpose. 
+hcp_tb %>% 
+  colMeans(na.rm = TRUE) %>% 
+  sort(decreasing = TRUE) %>% 
+  names() -> hcp_tb_term_ordered
+
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
+# Ordering descriptive of FP sample.
+data.frame(fp_ta_sd = sapply(fp_ta, sd, na.rm=TRUE),
+           fp_ta_mean = sapply(fp_ta, mean, na.rm=TRUE), 
+           fp_ta_mdn = sapply(fp_ta, median, na.rm=TRUE),
+           fp_ta_max = sapply(fp_ta, max, na.rm=TRUE),
+           fp_ta_min = sapply(fp_ta, min, na.rm=TRUE)) %>%
+  mutate(term = names(fp_ta)) -> fp_ta_des
+
+# Rating descriptive of FP sample.
+data.frame(fp_tb_sd = sapply(fp_tb, sd, na.rm=TRUE),
+           fp_tb_mean = sapply(fp_tb, mean, na.rm=TRUE), 
+           fp_tb_mdn = sapply(fp_tb, median, na.rm=TRUE),
+           fp_tb_max = sapply(fp_tb, max, na.rm=TRUE),
+           fp_tb_min = sapply(fp_tb, min, na.rm=TRUE)) %>%
+  mutate(term = names(fp_tb)) -> fp_tb_des
+
+# Ordering descriptive of HCP sample.
+data.frame(hcp_ta_sd = sapply(hcp_ta, sd, na.rm=TRUE),
+           hcp_ta_mean = sapply(hcp_ta, mean, na.rm=TRUE), 
+           hcp_ta_mdn = sapply(hcp_ta, median, na.rm=TRUE),
+           hcp_ta_max = sapply(hcp_ta, max, na.rm=TRUE),
+           hcp_ta_min = sapply(hcp_ta, min, na.rm=TRUE)) %>%
+  mutate(term = names(hcp_ta)) -> hcp_ta_des
+
+# Rating descriptive of FP sample.
+data.frame(hcp_tb_sd = sapply(hcp_tb, sd, na.rm=TRUE),
+           hcp_tb_mean = sapply(hcp_tb, mean, na.rm=TRUE), 
+           hcp_tb_mdn = sapply(hcp_tb, median, na.rm=TRUE),
+           hcp_tb_max = sapply(hcp_tb, max, na.rm=TRUE),
+           hcp_tb_min = sapply(hcp_tb, min, na.rm=TRUE)) %>%
+  mutate(term = names(hcp_tb)) -> hcp_tb_des
+
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
+fp_ta_des %>%
+  left_join(hcp_ta_des, by = "term") %>%
+  left_join(fphcp_ta_x2_real, by = "term") %>%
+  arrange(match(term, hcp_tb_term_ordered)) -> all_ta_des
+
+fp_tb_des %>%
+  left_join(hcp_tb_des, by = "term") %>%
+  left_join(fphcp_tb_ks_real, by = "term") %>%
+  arrange(match(term, hcp_tb_term_ordered)) -> all_tb_des
+
+
+```
+
+Descriptive statistics for rank orderings in the Ordering Task according to HCP and FP groups
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+flextable(all_ta_des, 
+          col_keys = c("term", 
+                       "hcp_ta_mean", 
+                       "hcp_ta_sd", 
+                       "hcp_ta_mdn", 
+                       "hcp_ta_max",
+                       "fp_ta_mean", 
+                       "fp_ta_sd", 
+                       "fp_ta_mdn", 
+                       "fp_ta_max",
+                       "X2_real",
+                       "df", 
+                       "p.value_adjusted")) %>%
+  colformat_double(j='hcp_ta_mean', digits = 2) %>%
+  colformat_double(j='hcp_ta_sd', digits = 2) %>%
+  colformat_double(j='hcp_ta_mdn', digits = 0) %>%
+  colformat_double(j='fp_ta_mean', digits = 2) %>%
+  colformat_double(j='fp_ta_sd', digits = 2) %>%
+  colformat_double(j='fp_ta_mdn', digits = 0) %>%
+  colformat_double(j='X2_real', digits = 2) %>%
+  colformat_double(j='df') %>%
+  colformat_double(j='p.value_adjusted', digits = 3) %>%
+  mk_par(j = "hcp_ta_max", 
+         value = as_paragraph("(", 
+                              as_chunk(hcp_ta_min, digits = 0), 
+                              ", ", 
+                              as_chunk(hcp_ta_max, digits = 0), 
+                              ")")) %>% 
+  mk_par(j = "fp_ta_max", 
+         value = as_paragraph("(", 
+                              as_chunk(fp_ta_min, digits = 0), 
+                              ", ", 
+                              as_chunk(fp_ta_max, digits = 0), 
+                              ")")) %>% 
+  set_header_labels(term = "Terms from most to least likely", 
+                    hcp_ta_mean = "Mean", 
+                    hcp_ta_sd = "SD", 
+                    hcp_ta_mdn = "Mdn", 
+                    hcp_ta_max = "Range",                    
+                    fp_ta_mean = "Mean", 
+                    fp_ta_sd = "SD", 
+                    fp_ta_mdn = "Mdn", 
+                    fp_ta_max = "Range",
+                    X2_real = "G^2",
+                    df = "DF",
+                    p.value_adjusted = "P-value") %>%
+  align(i = 1, part = "header", align = "center") %>%
+  set_table_properties(width = 1, layout = "autofit") %>%
+  add_footer_lines("Note. Probability 0 to 100%. Rows are ordered by ascending means of ratings of HCP column. DF = Degrees of freedom. LRT = Likelihood Ratio test. P-values were adjusted through permutation test due to the conservatism of Likelihood Ration test in the analysis. * p-value<0.05; ** p-value < 0.01; *** p-value < 0.001") %>%
+  add_header_row(values = c("HCP", "FP", "LR test statistics"),
+                 colwidths = c(5,4,3)) 
+```
+
+Descriptive statistics for probability ratings for terms in the Rating Task according to HCP and FP groups.
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+flextable(all_tb_des, 
+          col_keys = c("term", 
+                       "hcp_tb_mean", 
+                       "hcp_tb_sd", 
+                       "hcp_tb_mdn", 
+                       "hcp_tb_max",
+                       "fp_tb_mean", 
+                       "fp_tb_sd", 
+                       "fp_tb_mdn", 
+                       "fp_tb_max",                        
+                       "D",
+                       "p.value_adjusted")) %>%
+  colformat_double(j='hcp_tb_mean', digits = 2) %>%
+  colformat_double(j='hcp_tb_sd', digits = 2) %>%
+  colformat_double(j='hcp_tb_mdn', digits = 0) %>%
+  colformat_double(j='fp_tb_mean', digits = 2) %>%
+  colformat_double(j='fp_tb_sd', digits = 2) %>%
+  colformat_double(j='fp_tb_mdn', digits = 0) %>%
+  colformat_double(j='D', digits = 2) %>%
+  colformat_double(j='p.value_adjusted', digits = 3) %>%
+  set_table_properties(layout = "autofit", width = 1) %>%
+  mk_par(j = "hcp_tb_max", 
+         value = as_paragraph("(", 
+                              as_chunk(hcp_tb_min, digits = 0), 
+                              ", ", 
+                              as_chunk(hcp_tb_max, digits = 0), 
+                              ")")) %>% 
+  mk_par(j = "fp_tb_max", 
+         value = as_paragraph("(", 
+                              as_chunk(fp_tb_min, digits = 0), 
+                              ", ", 
+                              as_chunk(fp_tb_max, digits = 0), 
+                              ")")) %>% 
+  set_header_labels(term = "Terms from most to least likely", 
+                    hcp_tb_mean = "Mean", 
+                    hcp_tb_sd = "SD", 
+                    hcp_tb_mdn = "Mdn", 
+                    hcp_tb_max = "Range",                    
+                    fp_tb_mean = "Mean", 
+                    fp_tb_sd = "SD", 
+                    fp_tb_mdn = "Mdn", 
+                    fp_tb_max = "Range",
+                    D = "D",                    
+                    p.value_adjusted = "P-value") %>%
+  add_footer_lines("Note. Probability 0 to 100%. Rows are ordered by ascending means of ratings of HCP column. KS = Kolmogorov-Smirnov. P-values were adjusted through permutation test due to the conservatism of Kolmogorov-Smirnov test in the analysis. * p-value<0.05; ** p-value < 0.01; *** p-value < 0.001") %>%
+  add_header_row(values = c("HCP", "FP", "KS test statistics"),
+                 colwidths = c(4, 4, 3)) %>%
+  align(i = 1, part = "header", align = "center") 
+```

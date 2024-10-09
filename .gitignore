@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+FP_data_n257.csv.gitignore
+HCP_data_n216.csv.gitignore
+fp_ta_clean.csv.gitignore
+fp_tb_clean.csv.gitignore
+hcp_ta_clean.csv.gitignore
+hcp_tb_clean.csv.gitignore
