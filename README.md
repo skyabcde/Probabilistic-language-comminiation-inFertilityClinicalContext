@@ -1,6 +1,6 @@
-# The use of probability terms among fertility patients and doctors when communicating the chance of pregnancy with fertility treatments
+### The use of probability terms among fertility patients and doctors when communicating the chance of pregnancy with fertility treatments
 
-### Authors: Jiawen Liu1, Rebecca Lewton1, Joanna Woolner1, Jacky Boivin1 and Richard D. Morey1. 1: Department of Psychology, Cardiff University, Tower Building, 70 Park Place, Cardiff, Wales. The authors consider the last two authors as joint Last Authors.
+#### Authors: Jiawen Liu1, Rebecca Lewton1, Joanna Woolner1, Jacky Boivin1 and Richard D. Morey1. 1: Department of Psychology, Cardiff University, Tower Building, 70 Park Place, Cardiff, Wales. The authors consider the last two authors as joint Last Authors.
 
 Introductions of R scripts in file "R_scripts":
 
